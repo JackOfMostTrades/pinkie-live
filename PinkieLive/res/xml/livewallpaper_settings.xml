@@ -3,13 +3,13 @@
 	android:title="Settings"
 	android:key="livewallpaper_settings">
 
-	<ListPreference
-		android:key="livewallpaper_testpattern"
-		android:title="Title"
-		android:summary="Summary"/>
-	<CheckBoxPreference android:key="livewallpaper_movement"
-		android:summary="Summary"
-		android:title="Title"
-		android:summaryOn="Moving test pattern"
-		android:summaryOff="Still test pattern"/>
+    <CheckBoxPreference android:key="livewallpaper_defaultbg"
+        android:defaultValue="true"
+		android:summary="Use Default Background"
+		android:title="Use Default Background"
+		android:summaryOn="Using Default Default"
+		android:summaryOff="Using Selected Image"/>
+    <Preference android:key="livewallpaper_image"
+        android:title="Select Background Image"
+        android:summary="Select Background" />
 </PreferenceScreen>

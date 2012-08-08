@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <wallpaper xmlns:android="http://schemas.android.com/apk/res/android"
-	android:settingsActivity="com.derpfish.LiveWallpaperSettings"
+	android:settingsActivity="com.derpfish.pinkielive.LiveWallpaperSettings"
 	android:thumbnail="@drawable/ic_launcher"/>

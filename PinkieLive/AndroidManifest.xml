@@ -8,12 +8,12 @@
 	<uses-feature android:name="android.software.live_wallpaper" />
 
 	<application android:icon="@drawable/ic_launcher"
-		android:label="Pinkie Pie Live"
-		android:permission="android.permission.BIND_WALLPAPER">
+		android:label="Pinkie Pie Live">
 
 		<service android:name=".LiveWallpaper"
 			android:label="Pinkie Pie Live"
-			android:icon="@drawable/ic_launcher">
+			android:icon="@drawable/ic_launcher"
+			android:permission="android.permission.BIND_WALLPAPER">
 
 			<intent-filter>
 				<action android:name="android.service.wallpaper.WallpaperService" />
@@ -29,6 +29,6 @@
 			android:exported="true"
 			android:icon="@drawable/ic_launcher">
 		</activity>
-
+		
 	</application>
 </manifest>

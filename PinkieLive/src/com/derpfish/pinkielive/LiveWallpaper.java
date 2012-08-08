@@ -11,6 +11,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.service.wallpaper.WallpaperService;
@@ -21,7 +22,7 @@ public class LiveWallpaper extends WallpaperService
 {
 	public static final String	SHARED_PREFS_NAME	= "livewallpapersettings";
 
-	private Bitmap background;
+	private Bitmap defaultBg;
 	private Bitmap bmPinkiePie;
 	
 	@Override
@@ -31,8 +32,8 @@ public class LiveWallpaper extends WallpaperService
 		
         AssetManager assetManager = getAssets();
 		try {
-	        InputStream istr = assetManager.open("Android_Wallpaper_by_clondike7.png");
-	        background = BitmapFactory.decodeStream(istr);
+	        InputStream istr = assetManager.open("defaultbg.jpg");
+	        defaultBg = BitmapFactory.decodeStream(istr);
 	        istr.close();
 	        
 	        istr = assetManager.open("pinkie.png");
@@ -46,7 +47,7 @@ public class LiveWallpaper extends WallpaperService
 	@Override
 	public void onDestroy()
 	{
-		background.recycle();
+		defaultBg.recycle();
 		bmPinkiePie.recycle();
 		super.onDestroy();
 	}
@@ -73,13 +74,13 @@ public class LiveWallpaper extends WallpaperService
 		private boolean drawingPinkie = false;
 		private long lastUpdate;
 
+		private Bitmap selectedBg = null;
+		
 		private int surfaceWidth;
 		private int surfaceHeight;
 		private float offsetX;
 		private float offsetY;
 		private final Handler		mHandler		= new Handler();
-		private float				mTouchX			= -1;
-		private float				mTouchY			= -1;
 		private final Paint			mPaint			= new Paint();
 		private final Runnable		mDrawPattern	= new Runnable()
 													{
@@ -88,7 +89,7 @@ public class LiveWallpaper extends WallpaperService
 															drawFrame();
 														}
 													};
-						
+		
 		private boolean				mVisible;
 		private SharedPreferences	mPreferences;
 
@@ -100,7 +101,7 @@ public class LiveWallpaper extends WallpaperService
 			paint.setStrokeWidth(2);
 			paint.setStrokeCap(Paint.Cap.ROUND);
 			paint.setStyle(Paint.Style.STROKE);
-
+			
 			mPreferences = LiveWallpaper.this.getSharedPreferences(SHARED_PREFS_NAME, 0);
 			mPreferences.registerOnSharedPreferenceChangeListener(this);
 			onSharedPreferenceChanged(mPreferences, null);
@@ -110,6 +111,39 @@ public class LiveWallpaper extends WallpaperService
 		public void onSharedPreferenceChanged(SharedPreferences prefs,
 				String key)
 		{
+			final boolean useDefaultBg = prefs.getBoolean("livewallpaper_defaultbg", true);
+			if (useDefaultBg)
+			{
+				if (selectedBg != null)
+				{
+					selectedBg.recycle();
+					selectedBg = null;
+				}
+			}
+			else
+			{
+				final String imageUriStr = prefs.getString("livewallpaper_image", null);
+				if (imageUriStr != null)
+				{
+					if (selectedBg != null)
+					{
+						selectedBg.recycle();
+					}
+					
+					final Uri bgImage = Uri.parse(imageUriStr);
+					try
+					{
+						final InputStream istr = getContentResolver().openInputStream(bgImage);
+						selectedBg = BitmapFactory.decodeStream(istr);
+						istr.close();
+					}
+					catch (IOException e)
+					{
+						throw new IllegalStateException("Could not open selected image.");
+					}
+				}
+			}
+			drawFrame();
 		}
 
 		@Override
@@ -123,6 +157,10 @@ public class LiveWallpaper extends WallpaperService
 		public void onDestroy()
 		{
 			super.onDestroy();
+			if (selectedBg != null)
+			{
+				selectedBg.recycle();
+			}
 			mHandler.removeCallbacks(mDrawPattern);
 		}
 
@@ -180,17 +218,6 @@ public class LiveWallpaper extends WallpaperService
 		@Override
 		public void onTouchEvent(MotionEvent event)
 		{
-			if (event.getAction() == MotionEvent.ACTION_MOVE)
-			{
-				mTouchX = event.getX();
-				mTouchY = event.getY();
-			}
-			else
-			{
-				mTouchX = -1;
-				mTouchY = -1;
-			}
-			
 			if (event.getAction() == MotionEvent.ACTION_UP)
 			{
 				// If the length of time pressed was less than 0.5 seconds, trigger a new drawing
@@ -209,8 +236,7 @@ public class LiveWallpaper extends WallpaperService
 						pinkieVelocityX = 2.0*(surfaceWidth/2.0f - pinkieX)/TIME_FOR_JUMP;
 
 						pinkieRotationAngle = (float)Math.toDegrees(Math.atan2(pinkieVelocityX, -pinkieVelocityY));
-						
-						System.out.println("vx: " + pinkieVelocityX + ", vy: " + pinkieVelocityY + ", angle: " + pinkieRotationAngle);
+						drawFrame();
 					}
 				}
 			}
@@ -239,7 +265,7 @@ public class LiveWallpaper extends WallpaperService
 					c.drawRect(0.0f, 0.0f, surfaceWidth, surfaceHeight, paintBlack);
 					
 					// draw something
-					c.drawBitmap(background,
+					c.drawBitmap(selectedBg != null ? selectedBg : defaultBg,
 							new Rect(-(int)offsetX, (int)offsetY, -(int)offsetX + surfaceWidth, (int)offsetY + surfaceHeight),
 							new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
 					
@@ -262,14 +288,16 @@ public class LiveWallpaper extends WallpaperService
 						}
 						else
 						{
+							final int PINKIE_WIDTH = (int)Math.min(surfaceWidth*0.4, surfaceHeight*0.4);
+							final float scale = (float)PINKIE_WIDTH/(float)bmPinkiePie.getWidth();
+							
 							final Matrix matrix = new Matrix();
-							matrix.setTranslate(pinkieX - bmPinkiePie.getWidth()/2, pinkieY);
-							matrix.preRotate(pinkieRotationAngle, bmPinkiePie.getWidth()/2, bmPinkiePie.getHeight()/2);
+							matrix.postRotate(pinkieRotationAngle, bmPinkiePie.getWidth()/2, bmPinkiePie.getHeight()/2);
+							matrix.postScale(scale, scale);
+							matrix.postTranslate(pinkieX - PINKIE_WIDTH/2, pinkieY);
 							c.drawBitmap(bmPinkiePie, matrix, mPaint);
 						}
 					}
-					
-					drawTouchPoint(c);
 				}
 			}
 			finally
@@ -279,17 +307,10 @@ public class LiveWallpaper extends WallpaperService
 			}
 
 			mHandler.removeCallbacks(mDrawPattern);
-			if (mVisible)
+			// Only queue another frame if we're still animating pinkie
+			if (mVisible && drawingPinkie)
 			{
 				mHandler.postDelayed(mDrawPattern, 1000 / 25);
-			}
-		}
-
-		private void drawTouchPoint(Canvas c)
-		{
-			if (mTouchX >= 0 && mTouchY >= 0)
-			{
-				c.drawCircle(mTouchX, mTouchY, 80, mPaint);
 			}
 		}
 	}
