@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+	android:title="Settings"
+	android:key="livewallpaper_settings">
+
+	<ListPreference
+		android:key="livewallpaper_testpattern"
+		android:title="Title"
+		android:summary="Summary"/>
+	<CheckBoxPreference android:key="livewallpaper_movement"
+		android:summary="Summary"
+		android:title="Title"
+		android:summaryOn="Moving test pattern"
+		android:summaryOff="Still test pattern"/>
+</PreferenceScreen>
