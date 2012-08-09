@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.app.WallpaperManager;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -256,8 +257,19 @@ public class LiveWallpaper extends WallpaperService
 					c.drawRect(0.0f, 0.0f, surfaceWidth, surfaceHeight, paintBlack);
 					
 					// draw something
-					c.drawBitmap(selectedBg != null ? selectedBg : defaultBg,
-							new Rect(-(int)offsetX, (int)offsetY, -(int)offsetX + surfaceWidth, (int)offsetY + surfaceHeight),
+					final Bitmap actualBg = selectedBg != null ? selectedBg : defaultBg;
+					final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
+					final int minWidth = wmMan.getDesiredMinimumWidth();
+					final int minHeight = wmMan.getDesiredMinimumHeight();
+					final float bgScale = Math.min(((float)actualBg.getWidth()) / ((float)minWidth), ((float)actualBg.getHeight()) / ((float)minHeight));
+					final int centeringOffsetX = (int)((float)actualBg.getWidth() - bgScale*minWidth)/2;
+					final int centeringOffsetY = (int)((float)actualBg.getHeight() - bgScale*minHeight)/2;
+					
+					c.drawBitmap(actualBg,
+							new Rect(centeringOffsetX - (int)(offsetX*bgScale),
+									centeringOffsetY - (int)(offsetY*bgScale),
+									centeringOffsetX + (int)((-offsetX + surfaceWidth)*bgScale),
+									centeringOffsetY + (int)((-offsetY + surfaceHeight)*bgScale)),
 							new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
 					
 					// Decide new position and velocity.
