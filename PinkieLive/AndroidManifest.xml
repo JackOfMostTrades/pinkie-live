@@ -30,5 +30,12 @@
 			android:icon="@drawable/ic_launcher">
 		</activity>
 		
+		<activity android:label="Credits"
+			android:name=".PinkieLiveCredits"
+			android:theme="@android:style/Theme.Light"
+			android:exported="false"
+			android:icon="@drawable/ic_launcher">
+		</activity>
+		
 	</application>
 </manifest>

@@ -18,4 +18,9 @@
         android:defaultValue="pinkie"
         android:entries="@array/ponyNames"
         android:entryValues="@array/ponyValues" />
+	<PreferenceScreen android:title="Credits">
+	    <intent android:action="android.intent.action.VIEW"
+    		android:targetPackage="com.derpfish.pinkielive"
+    		android:targetClass="com.derpfish.pinkielive.PinkieLiveCredits" />
+	</PreferenceScreen>
 </PreferenceScreen>
