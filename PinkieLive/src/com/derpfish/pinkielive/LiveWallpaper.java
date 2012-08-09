@@ -2,13 +2,14 @@ package com.derpfish.pinkielive;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -21,9 +22,12 @@ import android.view.SurfaceHolder;
 public class LiveWallpaper extends WallpaperService
 {
 	public static final String	SHARED_PREFS_NAME	= "livewallpapersettings";
+	// Round-trip time for a jump to complete in ms.
+	public static final double TIME_FOR_JUMP = 1500.0;
 
 	private Bitmap defaultBg;
-	private Bitmap bmPinkiePie;
+	private String selectedPony;
+	private Map<String, PonyAnimation> ponyAnimations;
 	
 	@Override
 	public void onCreate()
@@ -35,20 +39,23 @@ public class LiveWallpaper extends WallpaperService
 	        InputStream istr = assetManager.open("defaultbg.jpg");
 	        defaultBg = BitmapFactory.decodeStream(istr);
 	        istr.close();
-	        
-	        istr = assetManager.open("pinkie.png");
-	        bmPinkiePie = BitmapFactory.decodeStream(istr);
-	        istr.close();
 		} catch (IOException e) {
 			throw new IllegalStateException("Could not find background image");
 		}
+		
+		ponyAnimations = new HashMap<String, PonyAnimation>();
+		ponyAnimations.put("pinkie", new PinkieAnimation(assetManager));
+		ponyAnimations.put("rarity", new RarityAnimation(assetManager));
 	}
 
 	@Override
 	public void onDestroy()
 	{
 		defaultBg.recycle();
-		bmPinkiePie.recycle();
+		for (final PonyAnimation ponyAnimation : ponyAnimations.values())
+		{
+			ponyAnimation.onDestroy();
+		}
 		super.onDestroy();
 	}
 
@@ -61,17 +68,7 @@ public class LiveWallpaper extends WallpaperService
 	class TestPatternEngine extends Engine implements
 			SharedPreferences.OnSharedPreferenceChangeListener
 	{
-		// Round-trip time for a jump to complete in ms.
-		private static final double TIME_FOR_JUMP = 1500.0;
-		
-		// Pinkie's location
-		private float pinkieY;
-		private double pinkieVelocityY;
-		private float pinkieX;
-		private double pinkieVelocityX;
-		private float pinkieRotationAngle;
-		private float pinkieTargetHeight;
-		private boolean drawingPinkie = false;
+		private PonyAnimation currentAnimation = null;
 		private long lastUpdate;
 
 		private Bitmap selectedBg = null;
@@ -143,6 +140,8 @@ public class LiveWallpaper extends WallpaperService
 					}
 				}
 			}
+			selectedPony = prefs.getString("livewallpaper_pony", null);
+			
 			drawFrame();
 		}
 
@@ -222,20 +221,12 @@ public class LiveWallpaper extends WallpaperService
 			{
 				// If the length of time pressed was less than 0.5 seconds, trigger a new drawing
 				if (event.getEventTime() - event.getDownTime() < 500)
-				{					
-					if (!drawingPinkie)
+				{
+					if (currentAnimation == null)
 					{
-						drawingPinkie = true;
+						currentAnimation = ponyAnimations.containsKey(selectedPony) ? ponyAnimations.get(selectedPony) : ponyAnimations.get("pinkie");
+						currentAnimation.initialize(surfaceWidth, surfaceHeight, event.getX(), event.getY());
 						lastUpdate = SystemClock.elapsedRealtime();
-						
-						pinkieTargetHeight = Math.min(surfaceHeight/2, event.getY());
-						
-						pinkieY = surfaceHeight;
-						pinkieVelocityY = 4.0*(pinkieTargetHeight-surfaceHeight)/TIME_FOR_JUMP;
-						pinkieX = (surfaceWidth - event.getX());
-						pinkieVelocityX = 2.0*(surfaceWidth/2.0f - pinkieX)/TIME_FOR_JUMP;
-
-						pinkieRotationAngle = (float)Math.toDegrees(Math.atan2(pinkieVelocityX, -pinkieVelocityY));
 						drawFrame();
 					}
 				}
@@ -270,32 +261,16 @@ public class LiveWallpaper extends WallpaperService
 							new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
 					
 					// Decide new position and velocity.
-					if (drawingPinkie)
+					if (currentAnimation != null)
 					{
 						final long now = SystemClock.elapsedRealtime();
 						long elapsedTime = now - lastUpdate;
 						lastUpdate = now;
 						
-						final double gravity = 8.0*(surfaceHeight-pinkieTargetHeight)/(TIME_FOR_JUMP*TIME_FOR_JUMP);
-						pinkieY = (float)(elapsedTime*elapsedTime * gravity + elapsedTime * pinkieVelocityY + pinkieY);
-						pinkieVelocityY = elapsedTime * gravity + pinkieVelocityY;
-						
-						pinkieX = (float)(elapsedTime*pinkieVelocityX + pinkieX);
-						
-						if (pinkieY > surfaceHeight)
+						currentAnimation.drawAnimation(c, elapsedTime);
+						if (currentAnimation.isComplete())
 						{
-							drawingPinkie = false;
-						}
-						else
-						{
-							final int PINKIE_WIDTH = (int)Math.min(surfaceWidth*0.4, surfaceHeight*0.4);
-							final float scale = (float)PINKIE_WIDTH/(float)bmPinkiePie.getWidth();
-							
-							final Matrix matrix = new Matrix();
-							matrix.postRotate(pinkieRotationAngle, bmPinkiePie.getWidth()/2, bmPinkiePie.getHeight()/2);
-							matrix.postScale(scale, scale);
-							matrix.postTranslate(pinkieX - PINKIE_WIDTH/2, pinkieY);
-							c.drawBitmap(bmPinkiePie, matrix, mPaint);
+							currentAnimation = null;
 						}
 					}
 				}
@@ -308,7 +283,7 @@ public class LiveWallpaper extends WallpaperService
 
 			mHandler.removeCallbacks(mDrawPattern);
 			// Only queue another frame if we're still animating pinkie
-			if (mVisible && drawingPinkie)
+			if (mVisible && currentAnimation != null)
 			{
 				mHandler.postDelayed(mDrawPattern, 1000 / 25);
 			}

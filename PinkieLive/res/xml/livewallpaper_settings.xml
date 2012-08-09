@@ -12,4 +12,10 @@
     <Preference android:key="livewallpaper_image"
         android:title="Select Background Image"
         android:summary="Select Background" />
+	<ListPreference android:key="livewallpaper_pony"
+        android:title="Select Pony"
+        android:summary="Pick the pony to grace your screen"
+        android:defaultValue="pinkie"
+        android:entries="@array/ponyNames"
+        android:entryValues="@array/ponyValues" />
 </PreferenceScreen>

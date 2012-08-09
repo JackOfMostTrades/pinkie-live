@@ -8,6 +8,10 @@
 package com.derpfish.pinkielive;
 
 public final class R {
+    public static final class array {
+        public static final int ponyNames=0x7f040000;
+        public static final int ponyValues=0x7f040001;
+    }
     public static final class attr {
     }
     public static final class drawable {
