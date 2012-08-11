@@ -18,6 +18,10 @@
 			<intent-filter>
 				<action android:name="android.service.wallpaper.WallpaperService" />
 			</intent-filter>
+			<intent-filter>
+				<action android:name="android.intent.action.MEDIA_SCANNER_FINISHED"/>
+				<data android:scheme="file" />
+		    </intent-filter>
 			<meta-data android:name="android.service.wallpaper"
 				android:resource="@xml/livewallpaper" />
 

@@ -65,7 +65,7 @@ public class PinkieAnimation implements PonyAnimation
 		if (!completed)
 		{
 			final double gravity = 8.0*(surfaceHeight-pinkieTargetHeight)/(LiveWallpaper.TIME_FOR_JUMP*LiveWallpaper.TIME_FOR_JUMP);
-			pinkieY = (float)(elapsedTime*elapsedTime * gravity + elapsedTime * pinkieVelocityY + pinkieY);
+			pinkieY = (float)(0.5*elapsedTime*elapsedTime * gravity + elapsedTime * pinkieVelocityY + pinkieY);
 			pinkieVelocityY = elapsedTime * gravity + pinkieVelocityY;
 			
 			pinkieX = (float)(elapsedTime*pinkieVelocityX + pinkieX);

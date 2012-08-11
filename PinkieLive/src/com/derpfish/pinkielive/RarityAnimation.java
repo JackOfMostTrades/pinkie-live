@@ -9,7 +9,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.util.FloatMath;
 
 public class RarityAnimation implements PonyAnimation
 {
@@ -20,8 +19,7 @@ public class RarityAnimation implements PonyAnimation
 	
 	private float locX;
 	private double velocityX;
-	private float lineAngle;
-	private float lineLength;
+	private float locY;
 	private boolean flipBitmap;
 	
 	private boolean completed;
@@ -47,28 +45,19 @@ public class RarityAnimation implements PonyAnimation
 		this.surfaceWidth = surfaceWidth;
 		this.surfaceHeight = surfaceHeight;
 		
-		if (Math.abs(surfaceWidth/2 - tapX) < 1.0)
-		{
-			lineAngle = (float)(Math.PI/2.0);
-		}
-		else
-		{
-			lineAngle = (float)Math.atan((surfaceHeight/2 - tapY) / (surfaceWidth/2 - tapX));
-		}
-		lineLength = surfaceWidth / FloatMath.cos(lineAngle);
+		locY = tapY;
 		if (tapX <= surfaceWidth/2)
 		{
 			flipBitmap = false;
-			locX = lineLength;
-			velocityX = -lineLength/LiveWallpaper.TIME_FOR_JUMP;
+			locX = surfaceWidth;
+			velocityX = -surfaceWidth/LiveWallpaper.TIME_FOR_JUMP;
 		}
 		else
 		{
 			flipBitmap = true;
 			locX = 0;
-			velocityX = lineLength/LiveWallpaper.TIME_FOR_JUMP;
+			velocityX = surfaceWidth/LiveWallpaper.TIME_FOR_JUMP;
 		}
-		
 		completed = false;
 	}
 
@@ -80,12 +69,12 @@ public class RarityAnimation implements PonyAnimation
 		{
 			locX = (int)(velocityX * elapsedTime + locX); 
 			
-			final int ANIMATION_WIDTH = (int)Math.min(surfaceWidth*0.8, surfaceHeight*0.8);
+			final int ANIMATION_WIDTH = (int)Math.min(surfaceWidth*0.6, surfaceHeight*0.6);
 			final float scale = (float)ANIMATION_WIDTH/(float)bmRarity.getWidth();
 			
-			float locY = (int)(surfaceHeight/2 + scale*bmRarity.getHeight()/2.0f * Math.sin(Math.PI/lineLength*locX));
+			float locY = (int)(this.locY + scale*bmRarity.getHeight()/2.0f * Math.sin(Math.PI/surfaceWidth*locX));
 			
-			if (locX < -ANIMATION_WIDTH || locX > lineLength + ANIMATION_WIDTH)
+			if (locX < -ANIMATION_WIDTH || locX > surfaceWidth + ANIMATION_WIDTH)
 			{
 				completed = true;
 			}
@@ -98,8 +87,6 @@ public class RarityAnimation implements PonyAnimation
 					matrix.postScale(-1.0f, 1.0f);
 				}
 				matrix.postTranslate(locX, locY - scale*bmRarity.getHeight()/2.0f);
-				matrix.postRotate((float)Math.toDegrees(lineAngle), lineLength/2, surfaceHeight/2);
-				matrix.postTranslate((surfaceWidth - lineLength)/2, 0);
 				canvas.drawBitmap(bmRarity, matrix, mPaint);
 			}
 		}

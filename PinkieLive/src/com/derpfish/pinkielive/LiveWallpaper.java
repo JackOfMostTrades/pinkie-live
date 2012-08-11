@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import android.app.WallpaperManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -17,6 +21,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.service.wallpaper.WallpaperService;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
@@ -73,6 +78,7 @@ public class LiveWallpaper extends WallpaperService
 		private long lastUpdate;
 
 		private Bitmap selectedBg = null;
+		private boolean useDefaultBg = true;
 		
 		private int surfaceWidth;
 		private int surfaceHeight;
@@ -89,7 +95,7 @@ public class LiveWallpaper extends WallpaperService
 													};
 		
 		private boolean				mVisible;
-		private SharedPreferences	mPreferences;
+		private final SharedPreferences mPreferences;
 
 		private TestPatternEngine()
 		{
@@ -102,6 +108,29 @@ public class LiveWallpaper extends WallpaperService
 			
 			mPreferences = LiveWallpaper.this.getSharedPreferences(SHARED_PREFS_NAME, 0);
 			mPreferences.registerOnSharedPreferenceChangeListener(this);
+			
+			/*
+			 * If the media scanner finishes a scan, reload the preferences since this means a
+			 * previously unavailable background is now available.
+			 */
+            final IntentFilter iFilter = new IntentFilter();
+            iFilter.addAction(Intent.ACTION_MEDIA_SCANNER_FINISHED);
+            iFilter.addDataScheme("file");
+			registerReceiver(new BroadcastReceiver()
+				{
+	                @Override
+	                public void onReceive(Context context, Intent intent)
+	                {
+                        final String action = intent.getAction();
+                        if (action.equals(Intent.ACTION_MEDIA_SCANNER_FINISHED))
+                        {
+                        	onSharedPreferenceChanged(mPreferences, null);
+                        }
+	                }
+				},
+	            iFilter);
+			
+			// Load saved preferences
 			onSharedPreferenceChanged(mPreferences, null);
 		}
 
@@ -109,7 +138,7 @@ public class LiveWallpaper extends WallpaperService
 		public void onSharedPreferenceChanged(SharedPreferences prefs,
 				String key)
 		{
-			final boolean useDefaultBg = prefs.getBoolean("livewallpaper_defaultbg", true);
+			useDefaultBg = prefs.getBoolean("livewallpaper_defaultbg", true);
 			if (useDefaultBg)
 			{
 				if (selectedBg != null)
@@ -137,7 +166,8 @@ public class LiveWallpaper extends WallpaperService
 					}
 					catch (IOException e)
 					{
-						throw new IllegalStateException("Could not open selected image.");
+						selectedBg = null;
+						Log.w("PinkieLive", e);
 					}
 				}
 			}
@@ -257,20 +287,23 @@ public class LiveWallpaper extends WallpaperService
 					c.drawRect(0.0f, 0.0f, surfaceWidth, surfaceHeight, paintBlack);
 					
 					// draw something
-					final Bitmap actualBg = selectedBg != null ? selectedBg : defaultBg;
-					final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
-					final int minWidth = wmMan.getDesiredMinimumWidth();
-					final int minHeight = wmMan.getDesiredMinimumHeight();
-					final float bgScale = Math.min(((float)actualBg.getWidth()) / ((float)minWidth), ((float)actualBg.getHeight()) / ((float)minHeight));
-					final int centeringOffsetX = (int)((float)actualBg.getWidth() - bgScale*minWidth)/2;
-					final int centeringOffsetY = (int)((float)actualBg.getHeight() - bgScale*minHeight)/2;
-					
-					c.drawBitmap(actualBg,
-							new Rect(centeringOffsetX - (int)(offsetX*bgScale),
-									centeringOffsetY - (int)(offsetY*bgScale),
-									centeringOffsetX + (int)((-offsetX + surfaceWidth)*bgScale),
-									centeringOffsetY + (int)((-offsetY + surfaceHeight)*bgScale)),
-							new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
+					if (useDefaultBg || selectedBg != null)
+					{
+						final Bitmap actualBg = selectedBg != null ? selectedBg : defaultBg;
+						final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
+						final int minWidth = wmMan.getDesiredMinimumWidth();
+						final int minHeight = wmMan.getDesiredMinimumHeight();
+						final float bgScale = Math.min(((float)actualBg.getWidth()) / ((float)minWidth), ((float)actualBg.getHeight()) / ((float)minHeight));
+						final int centeringOffsetX = (int)((float)actualBg.getWidth() - bgScale*minWidth)/2;
+						final int centeringOffsetY = (int)((float)actualBg.getHeight() - bgScale*minHeight)/2;
+						
+						c.drawBitmap(actualBg,
+								new Rect(centeringOffsetX - (int)(offsetX*bgScale),
+										centeringOffsetY - (int)(offsetY*bgScale),
+										centeringOffsetX + (int)((-offsetX + surfaceWidth)*bgScale),
+										centeringOffsetY + (int)((-offsetY + surfaceHeight)*bgScale)),
+								new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
+					}
 					
 					// Decide new position and velocity.
 					if (currentAnimation != null)
