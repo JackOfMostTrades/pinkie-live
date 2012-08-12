@@ -96,6 +96,7 @@ public class LiveWallpaper extends WallpaperService
 		
 		private boolean				mVisible;
 		private final SharedPreferences mPreferences;
+		private final BroadcastReceiver broadcastReceiver;
 
 		private TestPatternEngine()
 		{
@@ -116,7 +117,8 @@ public class LiveWallpaper extends WallpaperService
             final IntentFilter iFilter = new IntentFilter();
             iFilter.addAction(Intent.ACTION_MEDIA_SCANNER_FINISHED);
             iFilter.addDataScheme("file");
-			registerReceiver(new BroadcastReceiver()
+            
+            broadcastReceiver = new BroadcastReceiver()
 				{
 	                @Override
 	                public void onReceive(Context context, Intent intent)
@@ -127,8 +129,8 @@ public class LiveWallpaper extends WallpaperService
                         	onSharedPreferenceChanged(mPreferences, null);
                         }
 	                }
-				},
-	            iFilter);
+				};
+			registerReceiver(broadcastReceiver, iFilter);
 			
 			// Load saved preferences
 			onSharedPreferenceChanged(mPreferences, null);
@@ -192,6 +194,7 @@ public class LiveWallpaper extends WallpaperService
 				selectedBg.recycle();
 			}
 			mHandler.removeCallbacks(mDrawPattern);
+			unregisterReceiver(broadcastReceiver);
 		}
 
 		@Override
