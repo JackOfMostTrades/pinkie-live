@@ -2,13 +2,20 @@ package com.derpfish.pinkielive;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Rect;
 
 public class PinkieAnimation implements PonyAnimation
 {
@@ -16,31 +23,26 @@ public class PinkieAnimation implements PonyAnimation
 	private float surfaceHeight;
 	
 	private float pinkieX;
+	private double pinkieVelocityX;
+	private float pinkieRotationAngle;
+	private float pinkieTargetHeight;
+	private boolean flipAnimation;
+
 	private boolean completed;
 	private long accumulatedTime;
 	
+	private Bitmap[] bmAnimation = null;
+	private int lastAnim = -1;
+	
 	private final Paint mPaint = new Paint();
 
-	final AssetManager assetManager;
-	int currentFrame = -1;
-	Bitmap[] bmAnimation = new Bitmap[max(NUM_FRAMES)];
-	int lastAnim = -1;
-	
-	private static final int[] NUM_FRAMES = {18,17,16,16,16,18,20};
-	
-	private static final int max(final int[] arr)
-	{
-		int max = -1;
-		for (final int x : arr)
-		{
-			max = Math.max(max, x);
-		}
-		return max;
-	}
+	private final AssetManager assetManager;
+	private static final int NUM_ANIMATIONS = 2;
+	private static final long FRAME_DELAY = 50;
 	
 	public PinkieAnimation(final AssetManager assetManager)
 	{
-		this.assetManager = assetManager;
+		this.assetManager = assetManager;		
 	}
 	
 	@Override
@@ -48,33 +50,56 @@ public class PinkieAnimation implements PonyAnimation
 	{
 		this.surfaceWidth = surfaceWidth;
 		this.surfaceHeight = surfaceHeight;
-		pinkieX = tapX;
+		
+		lastAnim = (lastAnim+1) % NUM_ANIMATIONS;
+		if (bmAnimation != null)
+		{
+			for (int i = 0; i < bmAnimation.length; i++)
+			{
+				bmAnimation[i].recycle();
+			}
+			bmAnimation = null;
+		}
+		try
+		{
+			final InputStream istr = assetManager.open("jump" + (lastAnim+1) + ".zip");
+			final ZipInputStream zis = new ZipInputStream(istr);
+			final Map<String, Bitmap> bitmaps = new HashMap<String, Bitmap>();
+			ZipEntry zipEntry = null;
+			while ((zipEntry = zis.getNextEntry()) != null)
+			{
+				bitmaps.put(zipEntry.getName(), BitmapFactory.decodeStream(zis));
+			}
+			zis.close();
+			istr.close();
+			
+			final List<String> names = new ArrayList<String>(bitmaps.keySet());
+			Collections.sort(names);
+			bmAnimation = new Bitmap[bitmaps.size()];
+			for (int i = 0; i < names.size(); i++)
+			{
+				bmAnimation[i] = bitmaps.get(names.get(i));
+			}
+		}
+		catch (IOException e)
+		{
+			throw new IllegalStateException("Could not load animation: " + lastAnim);
+		}
 		
 		completed = false;
 		accumulatedTime = 0L;
-		lastAnim = (lastAnim+1) % NUM_FRAMES.length;
-		for (int i = 0; i < bmAnimation.length; i++)
-		{
-			if (bmAnimation[i] != null)
-			{
-				bmAnimation[i].recycle();
-				bmAnimation[i] = null;
-			}
-		}
-		for (int i = 0; i < NUM_FRAMES[lastAnim]; i++)
-		{
-			try
-			{
-				final InputStream istr = assetManager.open("jump" + (lastAnim+1) + "/pinkie_jumps" + (i+1) + ".png");
-				bmAnimation[i] = BitmapFactory.decodeStream(istr);
-				istr.close();
-			}
-			catch (IOException e)
-			{
-				throw new IllegalStateException("Could not load frame: " + i);
-			}
-		}
 
+		// Target getting 2/3 of the way up the image to this position
+		final int PINKIE_WIDTH = (int)Math.min(surfaceWidth*0.75, surfaceHeight*0.75);
+		final float scale = (float)PINKIE_WIDTH/(float)bmAnimation[0].getWidth();
+		pinkieTargetHeight = Math.min(surfaceHeight/2, tapY) - scale*(bmAnimation[0].getHeight()/3.0f);
+		
+		final double pinkieVelocityY = 4.0*(pinkieTargetHeight-surfaceHeight)/((double)(bmAnimation.length*FRAME_DELAY));
+		pinkieX = (surfaceWidth - tapX);
+		pinkieVelocityX = 2.0*(surfaceWidth/2.0f - pinkieX)/((double)(bmAnimation.length*FRAME_DELAY));
+		flipAnimation = (pinkieVelocityX < 0);
+
+		pinkieRotationAngle = (float)Math.toDegrees(Math.atan2(pinkieVelocityX, -pinkieVelocityY));
 	}
 
 	@Override
@@ -84,21 +109,27 @@ public class PinkieAnimation implements PonyAnimation
 		if (!completed)
 		{
 			accumulatedTime += elapsedTime;
-			final int frameNum = (int)(accumulatedTime / 40);
+			final int currentFrame = (int)(accumulatedTime / FRAME_DELAY);
 			
-			if (frameNum < bmAnimation.length && bmAnimation[frameNum] != null)
+			final double pinkieY = surfaceHeight + (pinkieTargetHeight - surfaceHeight) * (1 - Math.pow((2.0*accumulatedTime)/((double)(bmAnimation.length*FRAME_DELAY)) - 1.0, 4.0));		
+			pinkieX = (float)(elapsedTime*pinkieVelocityX + pinkieX);
+			
+			if (currentFrame < bmAnimation.length && pinkieY <= surfaceHeight)
 			{
-				// FIXME (all animations should have same scale)
-				//final float scale = Math.min(surfaceWidth*0.5f / (float)bmAnimation[frameNum].getWidth(),
-				//		surfaceHeight*0.5f / (float)bmAnimation[frameNum].getWidth());
-				final float scale = Math.min(surfaceWidth*0.6f / 225.0f, surfaceHeight*0.6f / 225.0f);
-				final int targetWidth = (int)(bmAnimation[frameNum].getWidth()*scale);
-				final int targetHeight = (int)(bmAnimation[frameNum].getHeight()*scale);
+				final Bitmap bitmap = bmAnimation[currentFrame];
+				final int PINKIE_WIDTH = (int)Math.min(surfaceWidth*0.75, surfaceHeight*0.75);
+				final float scale = (float)PINKIE_WIDTH/(float)bitmap.getWidth();
 				
-				canvas.drawBitmap(bmAnimation[frameNum],
-						new Rect(0, 0, bmAnimation[frameNum].getWidth(), bmAnimation[frameNum].getHeight()),
-						new Rect((int)pinkieX - targetWidth/2, (int)surfaceHeight-targetHeight, (int)pinkieX + targetWidth/2, (int)surfaceHeight),
-						mPaint);
+				final Matrix matrix = new Matrix();
+				if (flipAnimation)
+				{
+					matrix.postScale(-1.0f, 1.0f);
+					matrix.postTranslate(bitmap.getWidth(), 0.0f);
+				}
+				matrix.postRotate(pinkieRotationAngle, bitmap.getWidth()/2, bitmap.getHeight()/2);
+				matrix.postScale(scale, scale);
+				matrix.postTranslate(pinkieX - PINKIE_WIDTH/2, (float)pinkieY);
+				canvas.drawBitmap(bitmap, matrix, mPaint);
 			}
 			else
 			{
@@ -116,12 +147,11 @@ public class PinkieAnimation implements PonyAnimation
 	@Override
 	public void onDestroy()
 	{
-		for (int i = 0; i < bmAnimation.length; i++)
+		if (bmAnimation != null)
 		{
-			if (bmAnimation[i] != null)
+			for (int i = 0; i < bmAnimation.length; i++)
 			{
 				bmAnimation[i].recycle();
-				bmAnimation[i] = null;
 			}
 		}
 	}
