@@ -37,7 +37,7 @@ public class PinkieAnimation implements PonyAnimation
 	private final Paint mPaint = new Paint();
 
 	private final AssetManager assetManager;
-	private static final int NUM_ANIMATIONS = 6;
+	private static final int NUM_ANIMATIONS = 7;
 	private static final long FRAME_DELAY = 50;
 	
 	private Thread loaderThread;
