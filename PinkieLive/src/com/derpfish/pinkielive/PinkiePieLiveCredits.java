@@ -6,7 +6,7 @@ import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.widget.TextView;
 
-public class PinkieLiveCredits extends Activity
+public class PinkiePieLiveCredits extends Activity
 {
 	@Override
     public void onCreate(Bundle savedInstanceState) {

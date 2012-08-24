@@ -10,7 +10,7 @@
 	<application android:icon="@drawable/ic_launcher"
 		android:label="Pinkie Pie Live">
 
-		<service android:name=".LiveWallpaper"
+		<service android:name=".PinkiePieLiveWallpaper"
 			android:label="Pinkie Pie Live"
 			android:icon="@drawable/ic_launcher"
 			android:permission="android.permission.BIND_WALLPAPER">
@@ -28,14 +28,14 @@
 		</service>
 
 		<activity android:label="Settings"
-			android:name=".LiveWallpaperSettings"
+			android:name=".PinkiePieLiveWallpaperSettings"
 			android:theme="@android:style/Theme.Light.WallpaperSettings"
 			android:exported="true"
 			android:icon="@drawable/ic_launcher">
 		</activity>
 		
 		<activity android:label="Credits"
-			android:name=".PinkieLiveCredits"
+			android:name=".PinkiePieLiveCredits"
 			android:theme="@android:style/Theme.Light"
 			android:exported="false"
 			android:icon="@drawable/ic_launcher">

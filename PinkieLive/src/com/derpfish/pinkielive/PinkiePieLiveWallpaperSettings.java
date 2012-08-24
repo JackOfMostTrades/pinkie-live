@@ -11,7 +11,7 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 
-public class LiveWallpaperSettings extends PreferenceActivity
+public class PinkiePieLiveWallpaperSettings extends PreferenceActivity
 	implements SharedPreferences.OnSharedPreferenceChangeListener, OnPreferenceClickListener
 {
 	private static final int SELECT_PICTURE = 1;
@@ -23,7 +23,7 @@ public class LiveWallpaperSettings extends PreferenceActivity
 	{
 		super.onCreate(icicle);
         
-		getPreferenceManager().setSharedPreferencesName(LiveWallpaper.SHARED_PREFS_NAME);
+		getPreferenceManager().setSharedPreferencesName(PinkiePieLiveWallpaper.SHARED_PREFS_NAME);
 		addPreferencesFromResource(R.xml.livewallpaper_settings);
 		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 		

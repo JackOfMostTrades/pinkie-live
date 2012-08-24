@@ -5,6 +5,10 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.derpfish.pinkielive.animation.PinkieAnimation;
+import com.derpfish.pinkielive.animation.PonyAnimation;
+import com.derpfish.pinkielive.animation.RarityAnimation;
+
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -25,14 +29,14 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
-public class LiveWallpaper extends WallpaperService
+public class PinkiePieLiveWallpaper extends WallpaperService
 {
 	public static final String	SHARED_PREFS_NAME	= "livewallpapersettings";
 	// Round-trip time for a jump to complete in ms.
 	public static final double TIME_FOR_JUMP = 1500.0;
 
 	private Bitmap defaultBg;
-	private String selectedPony;
+	private PonyAnimation selectedPony;
 	private Map<String, PonyAnimation> ponyAnimations;
 	
 	@Override
@@ -58,10 +62,7 @@ public class LiveWallpaper extends WallpaperService
 	public void onDestroy()
 	{
 		defaultBg.recycle();
-		for (final PonyAnimation ponyAnimation : ponyAnimations.values())
-		{
-			ponyAnimation.onDestroy();
-		}
+		selectedPony.onDestroy();
 		super.onDestroy();
 	}
 
@@ -74,7 +75,6 @@ public class LiveWallpaper extends WallpaperService
 	class TestPatternEngine extends Engine implements
 			SharedPreferences.OnSharedPreferenceChangeListener
 	{
-		private PonyAnimation currentAnimation = null;
 		private long lastUpdate;
 
 		private Bitmap selectedBg = null;
@@ -107,7 +107,7 @@ public class LiveWallpaper extends WallpaperService
 			paint.setStrokeCap(Paint.Cap.ROUND);
 			paint.setStyle(Paint.Style.STROKE);
 			
-			mPreferences = LiveWallpaper.this.getSharedPreferences(SHARED_PREFS_NAME, 0);
+			mPreferences = PinkiePieLiveWallpaper.this.getSharedPreferences(SHARED_PREFS_NAME, 0);
 			mPreferences.registerOnSharedPreferenceChangeListener(this);
 			
 			/*
@@ -173,7 +173,14 @@ public class LiveWallpaper extends WallpaperService
 					}
 				}
 			}
-			selectedPony = prefs.getString("livewallpaper_pony", null);
+			
+			// Change selected pony
+			if (selectedPony != null)
+			{
+				selectedPony.onDestroy();
+			}
+			selectedPony = ponyAnimations.get(prefs.getString("livewallpaper_pony", "pinkie"));
+			selectedPony.onCreate();
 			
 			drawFrame();
 		}
@@ -256,10 +263,9 @@ public class LiveWallpaper extends WallpaperService
 				// If the length of time pressed was less than 0.5 seconds, trigger a new drawing
 				if (event.getEventTime() - event.getDownTime() < 500)
 				{
-					if (currentAnimation == null)
+					if (selectedPony.isComplete())
 					{
-						currentAnimation = ponyAnimations.containsKey(selectedPony) ? ponyAnimations.get(selectedPony) : ponyAnimations.get("pinkie");
-						currentAnimation.initialize(surfaceWidth, surfaceHeight, event.getX(), event.getY());
+						selectedPony.initialize(surfaceWidth, surfaceHeight, event.getX(), event.getY());
 						lastUpdate = SystemClock.elapsedRealtime();
 						drawFrame();
 					}
@@ -309,17 +315,12 @@ public class LiveWallpaper extends WallpaperService
 					}
 					
 					// Decide new position and velocity.
-					if (currentAnimation != null)
+					if (!selectedPony.isComplete())
 					{
 						final long now = SystemClock.elapsedRealtime();
 						long elapsedTime = now - lastUpdate;
 						lastUpdate = now;
-						
-						currentAnimation.drawAnimation(c, elapsedTime);
-						if (currentAnimation.isComplete())
-						{
-							currentAnimation = null;
-						}
+						selectedPony.drawAnimation(c, elapsedTime);
 					}
 				}
 			}
@@ -331,7 +332,7 @@ public class LiveWallpaper extends WallpaperService
 
 			mHandler.removeCallbacks(mDrawPattern);
 			// Only queue another frame if we're still animating pinkie
-			if (mVisible && currentAnimation != null)
+			if (mVisible && !selectedPony.isComplete())
 			{
 				mHandler.postDelayed(mDrawPattern, 1000 / 25);
 			}

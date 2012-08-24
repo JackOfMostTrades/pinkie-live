@@ -1,4 +1,4 @@
-package com.derpfish.pinkielive;
+package com.derpfish.pinkielive.animation;
 
 import android.graphics.Canvas;
 
@@ -10,6 +10,7 @@ public interface PonyAnimation
 	
 	public boolean isComplete();
 	
+	public void onCreate();
 	public void onDestroy();
 
 }

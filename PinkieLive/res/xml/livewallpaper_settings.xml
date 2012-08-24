@@ -21,6 +21,6 @@
 	<PreferenceScreen android:title="Credits">
 	    <intent android:action="android.intent.action.VIEW"
     		android:targetPackage="com.derpfish.pinkielive"
-    		android:targetClass="com.derpfish.pinkielive.PinkieLiveCredits" />
+    		android:targetClass="com.derpfish.pinkielive.PinkiePieLiveCredits" />
 	</PreferenceScreen>
 </PreferenceScreen>

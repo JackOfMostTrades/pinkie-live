@@ -1,7 +1,9 @@
-package com.derpfish.pinkielive;
+package com.derpfish.pinkielive.animation;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import com.derpfish.pinkielive.PinkiePieLiveWallpaper;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -12,7 +14,7 @@ import android.graphics.Paint;
 
 public class RarityAnimation implements PonyAnimation
 {
-	private final Bitmap bmRarity;
+	private Bitmap bmRarity;
 	
 	private float surfaceWidth;
 	private float surfaceHeight;
@@ -22,21 +24,14 @@ public class RarityAnimation implements PonyAnimation
 	private float locY;
 	private boolean flipBitmap;
 	
-	private boolean completed;
+	private boolean completed = true;
 	
 	private final Paint mPaint = new Paint();
+	private final AssetManager assetManager;
 	
 	public RarityAnimation(final AssetManager assetManager)
 	{
-		try {
-			final InputStream istr = assetManager.open("rarity.png");
-	        bmRarity = BitmapFactory.decodeStream(istr);
-	        istr.close();
-		}
-		catch (IOException e)
-		{
-			throw new IllegalStateException("Could not load asset");
-		}
+		this.assetManager = assetManager;
 	}
 	
 	@Override
@@ -50,13 +45,13 @@ public class RarityAnimation implements PonyAnimation
 		{
 			flipBitmap = false;
 			locX = surfaceWidth;
-			velocityX = -surfaceWidth/LiveWallpaper.TIME_FOR_JUMP;
+			velocityX = -surfaceWidth/PinkiePieLiveWallpaper.TIME_FOR_JUMP;
 		}
 		else
 		{
 			flipBitmap = true;
 			locX = 0;
-			velocityX = surfaceWidth/LiveWallpaper.TIME_FOR_JUMP;
+			velocityX = surfaceWidth/PinkiePieLiveWallpaper.TIME_FOR_JUMP;
 		}
 		completed = false;
 	}
@@ -96,6 +91,22 @@ public class RarityAnimation implements PonyAnimation
 	public boolean isComplete()
 	{
 		return completed;
+	}
+	
+	@Override
+	public void onCreate()
+	{
+		completed = true;
+		try
+		{
+			final InputStream istr = assetManager.open("rarity.png");
+	        bmRarity = BitmapFactory.decodeStream(istr);
+	        istr.close();
+		}
+		catch (IOException e)
+		{
+			throw new IllegalStateException("Could not load asset");
+		}
 	}
 
 	@Override

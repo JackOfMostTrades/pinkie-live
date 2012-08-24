@@ -1,4 +1,4 @@
-package com.derpfish.pinkielive;
+package com.derpfish.pinkielive.animation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +28,7 @@ public class PinkieAnimation implements PonyAnimation
 	private float pinkieTargetHeight;
 	private boolean flipAnimation;
 
-	private boolean completed;
+	private boolean completed = true;
 	private long accumulatedTime;
 	
 	private Bitmap[] bmAnimation = null;
@@ -37,8 +37,11 @@ public class PinkieAnimation implements PonyAnimation
 	private final Paint mPaint = new Paint();
 
 	private final AssetManager assetManager;
-	private static final int NUM_ANIMATIONS = 2;
+	private static final int NUM_ANIMATIONS = 6;
 	private static final long FRAME_DELAY = 50;
+	
+	private Thread loaderThread;
+	private final LoadAnimationRunnable loadAnimationRunnable = new LoadAnimationRunnable();
 	
 	public PinkieAnimation(final AssetManager assetManager)
 	{
@@ -51,40 +54,8 @@ public class PinkieAnimation implements PonyAnimation
 		this.surfaceWidth = surfaceWidth;
 		this.surfaceHeight = surfaceHeight;
 		
-		lastAnim = (lastAnim+1) % NUM_ANIMATIONS;
-		if (bmAnimation != null)
-		{
-			for (int i = 0; i < bmAnimation.length; i++)
-			{
-				bmAnimation[i].recycle();
-			}
-			bmAnimation = null;
-		}
-		try
-		{
-			final InputStream istr = assetManager.open("jump" + (lastAnim+1) + ".zip");
-			final ZipInputStream zis = new ZipInputStream(istr);
-			final Map<String, Bitmap> bitmaps = new HashMap<String, Bitmap>();
-			ZipEntry zipEntry = null;
-			while ((zipEntry = zis.getNextEntry()) != null)
-			{
-				bitmaps.put(zipEntry.getName(), BitmapFactory.decodeStream(zis));
-			}
-			zis.close();
-			istr.close();
-			
-			final List<String> names = new ArrayList<String>(bitmaps.keySet());
-			Collections.sort(names);
-			bmAnimation = new Bitmap[bitmaps.size()];
-			for (int i = 0; i < names.size(); i++)
-			{
-				bmAnimation[i] = bitmaps.get(names.get(i));
-			}
-		}
-		catch (IOException e)
-		{
-			throw new IllegalStateException("Could not load animation: " + lastAnim);
-		}
+		// Wait for animation to be fully loaded
+		waitForLoader();
 		
 		completed = false;
 		accumulatedTime = 0L;
@@ -134,6 +105,76 @@ public class PinkieAnimation implements PonyAnimation
 			else
 			{
 				completed = true;
+				loadNextAnimation();
+			}
+		}
+	}
+	
+	private void loadNextAnimation()
+	{
+		waitForLoader();
+		loaderThread = new Thread(loadAnimationRunnable);
+		loaderThread.start();
+	}
+	
+	private void waitForLoader()
+	{
+		synchronized(this)
+		{
+			if (loaderThread == null)
+			{
+				return;
+			}
+			try
+			{
+				loaderThread.join();
+			}
+			catch (InterruptedException e)
+			{
+				throw new IllegalStateException("Unhandled interruption: " + e);
+			}
+			loaderThread = null;
+		}
+	}
+	
+	private class LoadAnimationRunnable implements Runnable
+	{
+		@Override
+		public void run()
+		{
+			lastAnim = (lastAnim+1) % NUM_ANIMATIONS;
+			if (bmAnimation != null)
+			{
+				for (int i = 0; i < bmAnimation.length; i++)
+				{
+					bmAnimation[i].recycle();
+				}
+				bmAnimation = null;
+			}
+			try
+			{
+				final InputStream istr = assetManager.open("jump" + (lastAnim+1) + ".zip");
+				final ZipInputStream zis = new ZipInputStream(istr);
+				final Map<String, Bitmap> bitmaps = new HashMap<String, Bitmap>();
+				ZipEntry zipEntry = null;
+				while ((zipEntry = zis.getNextEntry()) != null)
+				{
+					bitmaps.put(zipEntry.getName(), BitmapFactory.decodeStream(zis));
+				}
+				zis.close();
+				istr.close();
+				
+				final List<String> names = new ArrayList<String>(bitmaps.keySet());
+				Collections.sort(names);
+				bmAnimation = new Bitmap[bitmaps.size()];
+				for (int i = 0; i < names.size(); i++)
+				{
+					bmAnimation[i] = bitmaps.get(names.get(i));
+				}
+			}
+			catch (IOException e)
+			{
+				throw new IllegalStateException("Could not load animation: " + lastAnim);
 			}
 		}
 	}
@@ -144,6 +185,13 @@ public class PinkieAnimation implements PonyAnimation
 		return completed;
 	}
 
+	@Override
+	public void onCreate()
+	{
+		completed = true;
+		loadNextAnimation();
+	}
+	
 	@Override
 	public void onDestroy()
 	{
