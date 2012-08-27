@@ -18,6 +18,11 @@
         android:defaultValue="pinkie"
         android:entries="@array/ponyNames"
         android:entryValues="@array/ponyValues" />
+	<EditTextPreference android:key="livewallpaper_framerate"
+        android:title="Framerate"
+        android:summary="Frames per second for pony animations"
+        android:numeric="integer"
+        android:defaultValue="30" />
 	<PreferenceScreen android:title="Credits">
 	    <intent android:action="android.intent.action.VIEW"
     		android:targetPackage="com.derpfish.pinkielive"

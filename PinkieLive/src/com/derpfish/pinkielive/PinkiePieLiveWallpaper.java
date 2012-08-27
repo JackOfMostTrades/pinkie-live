@@ -79,6 +79,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 
 		private Bitmap selectedBg = null;
 		private boolean useDefaultBg = true;
+		private long targetFramerate = 30L;
 		
 		private int surfaceWidth;
 		private int surfaceHeight;
@@ -172,6 +173,16 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 						Log.w("PinkieLive", e);
 					}
 				}
+			}
+			
+			final String frameratePref = prefs.getString("livewallpaper_framerate", "30");
+			try
+			{
+				targetFramerate = Long.parseLong(frameratePref);
+			}
+			catch (NumberFormatException e)
+			{
+				Log.e("PinkieLive", e.getMessage());
 			}
 			
 			// Change selected pony
@@ -334,7 +345,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 			// Only queue another frame if we're still animating pinkie
 			if (mVisible && !selectedPony.isComplete())
 			{
-				mHandler.postDelayed(mDrawPattern, 1000 / 25);
+				mHandler.postDelayed(mDrawPattern, 1000 / targetFramerate);
 			}
 		}
 	}
