@@ -36,8 +36,14 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 	public static final double TIME_FOR_JUMP = 1500.0;
 
 	private Bitmap defaultBg;
-	private PonyAnimation selectedPony;
 	private Map<String, PonyAnimation> ponyAnimations;
+	
+	// Settings
+	private Bitmap selectedBg = null;
+	private boolean useDefaultBg = true;
+	private long targetFramerate = 30L;
+	private boolean enableParallax = true;
+	private PonyAnimation selectedPony;
 	
 	@Override
 	public void onCreate()
@@ -62,26 +68,30 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 	public void onDestroy()
 	{
 		defaultBg.recycle();
-		selectedPony.onDestroy();
+		if (selectedBg != null)
+		{
+			selectedBg.recycle();
+			selectedBg = null;
+		}
+		if (selectedPony != null)
+		{
+			selectedPony.onDestroy();
+			selectedPony = null;
+		}
+		
 		super.onDestroy();
 	}
 
 	@Override
 	public Engine onCreateEngine()
 	{
-		return new TestPatternEngine();
+		return new PonyEngine();
 	}
 
-	class TestPatternEngine extends Engine implements
+	class PonyEngine extends Engine implements
 			SharedPreferences.OnSharedPreferenceChangeListener
 	{
 		private long lastUpdate;
-
-		// Settings
-		private Bitmap selectedBg = null;
-		private boolean useDefaultBg = true;
-		private long targetFramerate = 30L;
-		private boolean enableParallax = true;
 		
 		private int surfaceWidth;
 		private int surfaceHeight;
@@ -101,7 +111,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 		private final SharedPreferences mPreferences;
 		private final BroadcastReceiver broadcastReceiver;
 
-		private TestPatternEngine()
+		private PonyEngine()
 		{
 			final Paint paint = mPaint;
 			paint.setColor(0xffffffff);
@@ -217,10 +227,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 		public void onDestroy()
 		{
 			super.onDestroy();
-			if (selectedBg != null)
-			{
-				selectedBg.recycle();
-			}
+			
 			mHandler.removeCallbacks(mDrawPattern);
 			unregisterReceiver(broadcastReceiver);
 		}
