@@ -330,19 +330,35 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 					if (useDefaultBg || selectedBg != null)
 					{
 						final Bitmap actualBg = selectedBg != null ? selectedBg : defaultBg;
-						final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
-						final int minWidth = wmMan.getDesiredMinimumWidth();
-						final int minHeight = wmMan.getDesiredMinimumHeight();
-						final float bgScale = Math.min(((float)actualBg.getWidth()) / ((float)minWidth), ((float)actualBg.getHeight()) / ((float)minHeight));
-						final int centeringOffsetX = (int)((float)actualBg.getWidth() - bgScale*minWidth)/2;
-						final int centeringOffsetY = (int)((float)actualBg.getHeight() - bgScale*minHeight)/2;
 						
-						c.drawBitmap(actualBg,
-								new Rect(centeringOffsetX - (int)(offsetX*bgScale),
-										centeringOffsetY - (int)(offsetY*bgScale),
-										centeringOffsetX + (int)((-offsetX + surfaceWidth)*bgScale),
-										centeringOffsetY + (int)((-offsetY + surfaceHeight)*bgScale)),
-								new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
+						if (enableParallax)
+						{
+							final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
+							final int minWidth = wmMan.getDesiredMinimumWidth();
+							final int minHeight = wmMan.getDesiredMinimumHeight();
+							final float bgScale = Math.min(((float)actualBg.getWidth()) / ((float)minWidth), ((float)actualBg.getHeight()) / ((float)minHeight));
+							final int centeringOffsetX = (int)((float)actualBg.getWidth() - bgScale*minWidth)/2;
+							final int centeringOffsetY = (int)((float)actualBg.getHeight() - bgScale*minHeight)/2;
+							
+							c.drawBitmap(actualBg,
+									new Rect(centeringOffsetX - (int)(offsetX*bgScale),
+											centeringOffsetY - (int)(offsetY*bgScale),
+											centeringOffsetX + (int)((-offsetX + surfaceWidth)*bgScale),
+											centeringOffsetY + (int)((-offsetY + surfaceHeight)*bgScale)),
+									new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
+						}
+						else
+						{
+							final float bgScale = Math.min(((float)actualBg.getWidth()) / ((float)surfaceWidth), ((float)actualBg.getHeight()) / ((float)surfaceHeight));
+							final int centeringOffsetX = (int)((float)actualBg.getWidth() - bgScale*surfaceWidth)/2;
+							final int centeringOffsetY = (int)((float)actualBg.getHeight() - bgScale*surfaceHeight)/2;
+							c.drawBitmap(actualBg,
+									new Rect(centeringOffsetX, centeringOffsetY,
+											centeringOffsetX + (int)(surfaceWidth*bgScale),
+											centeringOffsetY + (int)(surfaceHeight*bgScale)),
+									new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
+						}
+						
 					}
 					
 					// Decide new position and velocity.
