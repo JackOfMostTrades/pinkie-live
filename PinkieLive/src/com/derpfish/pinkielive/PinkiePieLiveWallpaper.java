@@ -11,13 +11,13 @@ import com.derpfish.pinkielive.animation.RarityAnimation;
 
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -31,34 +31,43 @@ import android.view.SurfaceHolder;
 
 public class PinkiePieLiveWallpaper extends WallpaperService
 {
-	public static final String	SHARED_PREFS_NAME	= "livewallpapersettings";
+	public static final String SHARED_PREFS_NAME = "livewallpapersettings";
 	// Round-trip time for a jump to complete in ms.
 	public static final double TIME_FOR_JUMP = 1500.0;
 
 	private Bitmap defaultBg;
 	private Map<String, PonyAnimation> ponyAnimations;
-	
+
 	// Settings
 	private Bitmap selectedBg = null;
 	private boolean useDefaultBg = true;
 	private long targetFramerate = 30L;
 	private boolean enableParallax = true;
 	private PonyAnimation selectedPony;
-	
+
 	@Override
 	public void onCreate()
 	{
 		super.onCreate();
-		
-        AssetManager assetManager = getAssets();
-		try {
-	        InputStream istr = assetManager.open("defaultbg.jpg");
-	        defaultBg = BitmapFactory.decodeStream(istr);
-	        istr.close();
-		} catch (IOException e) {
+
+		AssetManager assetManager = getAssets();
+		try
+		{
+			final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
+			
+			InputStream istr = assetManager.open("defaultbg.jpg");
+			final int sampleSize = BitmapLoader.getSampleSizeFromInputStream(istr,
+					wmMan.getDesiredMinimumWidth(), wmMan.getDesiredMinimumHeight());
+			istr.close();
+			istr = assetManager.open("defaultbg.jpg");
+			defaultBg = BitmapLoader.decodeSampledBitmapFromInputStream(istr, sampleSize);
+			istr.close();
+		}
+		catch (IOException e)
+		{
 			throw new IllegalStateException("Could not find background image");
 		}
-		
+
 		ponyAnimations = new HashMap<String, PonyAnimation>();
 		ponyAnimations.put("pinkie", new PinkieAnimation(assetManager));
 		ponyAnimations.put("rarity", new RarityAnimation(assetManager));
@@ -78,7 +87,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 			selectedPony.onDestroy();
 			selectedPony = null;
 		}
-		
+
 		super.onDestroy();
 	}
 
@@ -88,11 +97,10 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 		return new PonyEngine();
 	}
 
-	class PonyEngine extends Engine implements
-			SharedPreferences.OnSharedPreferenceChangeListener
+	class PonyEngine extends Engine implements SharedPreferences.OnSharedPreferenceChangeListener
 	{
 		private long lastUpdate;
-		
+
 		private int surfaceWidth;
 		private int surfaceHeight;
 		private float offsetX;
@@ -119,39 +127,39 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 			paint.setStrokeWidth(2);
 			paint.setStrokeCap(Paint.Cap.ROUND);
 			paint.setStyle(Paint.Style.STROKE);
-			
+
 			mPreferences = PinkiePieLiveWallpaper.this.getSharedPreferences(SHARED_PREFS_NAME, 0);
 			mPreferences.registerOnSharedPreferenceChangeListener(this);
-			
+
 			/*
-			 * If the media scanner finishes a scan, reload the preferences since this means a
-			 * previously unavailable background is now available.
+			 * If the media scanner finishes a scan, reload the preferences
+			 * since this means a previously unavailable background is now
+			 * available.
 			 */
-            final IntentFilter iFilter = new IntentFilter();
-            iFilter.addAction(Intent.ACTION_MEDIA_SCANNER_FINISHED);
-            iFilter.addDataScheme("file");
-            
-            broadcastReceiver = new BroadcastReceiver()
+			final IntentFilter iFilter = new IntentFilter();
+			iFilter.addAction(Intent.ACTION_MEDIA_SCANNER_FINISHED);
+			iFilter.addDataScheme("file");
+
+			broadcastReceiver = new BroadcastReceiver()
+			{
+				@Override
+				public void onReceive(Context context, Intent intent)
 				{
-	                @Override
-	                public void onReceive(Context context, Intent intent)
-	                {
-                        final String action = intent.getAction();
-                        if (action.equals(Intent.ACTION_MEDIA_SCANNER_FINISHED))
-                        {
-                        	onSharedPreferenceChanged(mPreferences, null);
-                        }
-	                }
-				};
+					final String action = intent.getAction();
+					if (action.equals(Intent.ACTION_MEDIA_SCANNER_FINISHED))
+					{
+						onSharedPreferenceChanged(mPreferences, null);
+					}
+				}
+			};
 			registerReceiver(broadcastReceiver, iFilter);
-			
+
 			// Load saved preferences
 			onSharedPreferenceChanged(mPreferences, null);
 		}
 
 		@Override
-		public void onSharedPreferenceChanged(SharedPreferences prefs,
-				String key)
+		public void onSharedPreferenceChanged(SharedPreferences prefs, String key)
 		{
 			useDefaultBg = prefs.getBoolean("livewallpaper_defaultbg", true);
 			if (useDefaultBg)
@@ -171,12 +179,20 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 					{
 						selectedBg.recycle();
 					}
-					
+
 					final Uri bgImage = Uri.parse(imageUriStr);
 					try
 					{
-						final InputStream istr = getContentResolver().openInputStream(bgImage);
-						selectedBg = BitmapFactory.decodeStream(istr);
+						final ContentResolver contentResolver = getContentResolver();
+						final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
+						
+						InputStream istr = contentResolver.openInputStream(bgImage);
+						final int sampleSize = BitmapLoader.getSampleSizeFromInputStream(istr,
+								wmMan.getDesiredMinimumWidth(), wmMan.getDesiredMinimumHeight());
+						istr.close();
+						
+						istr = contentResolver.openInputStream(bgImage);
+						selectedBg = BitmapLoader.decodeSampledBitmapFromInputStream(istr, sampleSize);
 						istr.close();
 					}
 					catch (IOException e)
@@ -186,7 +202,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 					}
 				}
 			}
-			
+
 			// Framerate
 			final String frameratePref = prefs.getString("livewallpaper_framerate", "30");
 			try
@@ -197,14 +213,14 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 			{
 				Log.e("PinkieLive", e.getMessage());
 			}
-			
+
 			// Parallax
 			enableParallax = prefs.getBoolean("livewallpaper_enableparallax", true);
 			if (!enableParallax)
 			{
 				offsetX = offsetY = 0.0f;
 			}
-			
+
 			// Change selected pony
 			if (selectedPony != null)
 			{
@@ -212,7 +228,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 			}
 			selectedPony = ponyAnimations.get(prefs.getString("livewallpaper_pony", "pinkie"));
 			selectedPony.onCreate();
-			
+
 			drawFrame();
 		}
 
@@ -227,7 +243,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 		public void onDestroy()
 		{
 			super.onDestroy();
-			
+
 			mHandler.removeCallbacks(mDrawPattern);
 			unregisterReceiver(broadcastReceiver);
 		}
@@ -247,8 +263,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 		}
 
 		@Override
-		public void onSurfaceChanged(SurfaceHolder holder, int format,
-				int width, int height)
+		public void onSurfaceChanged(SurfaceHolder holder, int format, int width, int height)
 		{
 			super.onSurfaceChanged(holder, format, width, height);
 			surfaceWidth = width;
@@ -271,8 +286,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 		}
 
 		@Override
-		public void onOffsetsChanged(float xOffset, float yOffset, float xStep,
-				float yStep, int xPixels, int yPixels)
+		public void onOffsetsChanged(float xOffset, float yOffset, float xStep, float yStep, int xPixels, int yPixels)
 		{
 			if (enableParallax)
 			{
@@ -291,7 +305,8 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 		{
 			if (event.getAction() == MotionEvent.ACTION_UP)
 			{
-				// If the length of time pressed was less than 0.5 seconds, trigger a new drawing
+				// If the length of time pressed was less than 0.5 seconds,
+				// trigger a new drawing
 				if (event.getEventTime() - event.getDownTime() < 500)
 				{
 					if (selectedPony.isComplete())
@@ -302,7 +317,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 					}
 				}
 			}
-			
+
 			super.onTouchEvent(event);
 		}
 
@@ -325,12 +340,12 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 					final Paint paintBlack = new Paint();
 					paintBlack.setColor(0xff000000);
 					c.drawRect(0.0f, 0.0f, surfaceWidth, surfaceHeight, paintBlack);
-					
+
 					// draw something
 					if (useDefaultBg || selectedBg != null)
 					{
 						final Bitmap actualBg = selectedBg != null ? selectedBg : defaultBg;
-						
+
 						if (enableParallax)
 						{
 							final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
@@ -358,9 +373,9 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 											centeringOffsetY + (int)(surfaceHeight*bgScale)),
 									new Rect(0, 0, surfaceWidth, surfaceHeight), mPaint);
 						}
-						
+
 					}
-					
+
 					// Decide new position and velocity.
 					if (!selectedPony.isComplete())
 					{

@@ -11,8 +11,8 @@ public class PinkiePieLiveWallpaperSettingsAdvanced extends PreferenceActivity
 	protected void onCreate(Bundle icicle)
 	{
 		super.onCreate(icicle);
-        
+
 		getPreferenceManager().setSharedPreferencesName(PinkiePieLiveWallpaper.SHARED_PREFS_NAME);
-		addPreferencesFromResource(R.xml.livewallpaper_settings_advanced);	
-	}	
+		addPreferencesFromResource(R.xml.livewallpaper_settings_advanced);
+	}
 }
