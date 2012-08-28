@@ -33,6 +33,14 @@
 			android:exported="true"
 			android:icon="@drawable/ic_launcher">
 		</activity>
+		<activity android:label="Advanced Settings"
+    		android:name=".PinkiePieLiveWallpaperSettingsAdvanced"
+            android:theme="@android:style/Theme.Light">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
 		
 		<activity android:label="Credits"
 			android:name=".PinkiePieLiveCredits"

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+	android:title="Advanced Settings"
+	android:key="livewallpaper_settings_advanced">
+
+	<EditTextPreference android:key="livewallpaper_framerate"
+        android:title="Framerate"
+        android:summary="Frames per second for pony animations"
+        android:numeric="integer"
+        android:defaultValue="30" />
+	<CheckBoxPreference android:key="livewallpaper_enableparallax"
+	    android:defaultValue="true"
+		android:title="Enable Parallax Scrolling"
+		android:summaryOn="Parallax Scrolling Enabled"
+		android:summaryOff="Parallax Scrolling Disabled" />
+   
+</PreferenceScreen>

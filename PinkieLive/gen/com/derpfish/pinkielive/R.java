@@ -29,5 +29,6 @@ public final class R {
     public static final class xml {
         public static final int livewallpaper=0x7f040000;
         public static final int livewallpaper_settings=0x7f040001;
+        public static final int livewallpaper_settings_advanced=0x7f040002;
     }
 }

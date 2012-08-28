@@ -77,9 +77,11 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 	{
 		private long lastUpdate;
 
+		// Settings
 		private Bitmap selectedBg = null;
 		private boolean useDefaultBg = true;
 		private long targetFramerate = 30L;
+		private boolean enableParallax = true;
 		
 		private int surfaceWidth;
 		private int surfaceHeight;
@@ -175,6 +177,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 				}
 			}
 			
+			// Framerate
 			final String frameratePref = prefs.getString("livewallpaper_framerate", "30");
 			try
 			{
@@ -183,6 +186,13 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 			catch (NumberFormatException e)
 			{
 				Log.e("PinkieLive", e.getMessage());
+			}
+			
+			// Parallax
+			enableParallax = prefs.getBoolean("livewallpaper_enableparallax", true);
+			if (!enableParallax)
+			{
+				offsetX = offsetY = 0.0f;
 			}
 			
 			// Change selected pony
@@ -257,9 +267,12 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 		public void onOffsetsChanged(float xOffset, float yOffset, float xStep,
 				float yStep, int xPixels, int yPixels)
 		{
-			offsetX = xPixels;
-			offsetY = yPixels;
-			drawFrame();
+			if (enableParallax)
+			{
+				offsetX = xPixels;
+				offsetY = yPixels;
+				drawFrame();
+			}
 		}
 
 		/*

@@ -18,11 +18,13 @@
         android:defaultValue="pinkie"
         android:entries="@array/ponyNames"
         android:entryValues="@array/ponyValues" />
-	<EditTextPreference android:key="livewallpaper_framerate"
-        android:title="Framerate"
-        android:summary="Frames per second for pony animations"
-        android:numeric="integer"
-        android:defaultValue="30" />
+	<PreferenceScreen android:title="Advanced Settings"
+	    android:summary="Tweaks and Workarounds"
+	    android:theme="@android:style/Theme.Light.WallpaperSettings">
+	    <intent android:action="android.intent.action.VIEW"
+                    android:targetPackage="com.derpfish.pinkielive"
+                    android:targetClass="com.derpfish.pinkielive.PinkiePieLiveWallpaperSettingsAdvanced"/>
+	</PreferenceScreen>
 	<PreferenceScreen android:title="Credits">
 	    <intent android:action="android.intent.action.VIEW"
     		android:targetPackage="com.derpfish.pinkielive"
