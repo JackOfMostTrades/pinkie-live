@@ -12,22 +12,25 @@
     <Preference android:key="livewallpaper_image"
         android:title="Select Background Image"
         android:summary="Select Background" />
-	<ListPreference android:key="livewallpaper_pony"
+	<com.derpfish.pinkielive.preference.PonyListPreference
+	    android:key="livewallpaper_pony"
         android:title="Select Pony"
         android:summary="Pick the pony to grace your screen"
-        android:defaultValue="pinkie"
-        android:entries="@array/ponyNames"
-        android:entryValues="@array/ponyValues" />
+        android:defaultValue="pinkie" />
+	<com.derpfish.pinkielive.preference.PonyDownloadListPreference
+	    android:key="livewallpaper_download"
+	    android:title="Download More Ponies"
+	    android:summary="Fetch animations from the project page" />
 	<PreferenceScreen android:title="Advanced Settings"
 	    android:summary="Tweaks and Workarounds"
 	    android:theme="@android:style/Theme.Light.WallpaperSettings">
 	    <intent android:action="android.intent.action.VIEW"
                     android:targetPackage="com.derpfish.pinkielive"
-                    android:targetClass="com.derpfish.pinkielive.PinkiePieLiveWallpaperSettingsAdvanced"/>
+                    android:targetClass="com.derpfish.pinkielive.preference.PinkiePieLiveWallpaperSettingsAdvanced"/>
 	</PreferenceScreen>
 	<PreferenceScreen android:title="Credits">
 	    <intent android:action="android.intent.action.VIEW"
     		android:targetPackage="com.derpfish.pinkielive"
-    		android:targetClass="com.derpfish.pinkielive.PinkiePieLiveCredits" />
+    		android:targetClass="com.derpfish.pinkielive.preference.PinkiePieLiveCredits" />
 	</PreferenceScreen>
 </PreferenceScreen>

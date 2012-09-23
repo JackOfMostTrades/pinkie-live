@@ -1,5 +1,6 @@
 package com.derpfish.pinkielive.animation;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -204,4 +205,8 @@ public class PinkieAnimation implements PonyAnimation
 		}
 	}
 
+	@Override
+	public void setResourceDir(File resourceDir)
+	{
+	}
 }

@@ -7,7 +7,7 @@
         android:title="Framerate"
         android:summary="Frames per second for pony animations"
         android:numeric="integer"
-        android:defaultValue="30" />
+        android:defaultValue="60" />
 	<CheckBoxPreference android:key="livewallpaper_enableparallax"
 	    android:defaultValue="true"
 		android:title="Enable Parallax Scrolling"

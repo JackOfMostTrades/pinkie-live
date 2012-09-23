@@ -7,7 +7,8 @@ import java.util.Map;
 
 import com.derpfish.pinkielive.animation.PinkieAnimation;
 import com.derpfish.pinkielive.animation.PonyAnimation;
-import com.derpfish.pinkielive.animation.RarityAnimation;
+import com.derpfish.pinkielive.download.PonyAnimationContainer;
+import com.derpfish.pinkielive.download.PonyDownloader;
 
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
@@ -35,13 +36,13 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 	// Round-trip time for a jump to complete in ms.
 	public static final double TIME_FOR_JUMP = 1500.0;
 
-	private Bitmap defaultBg;
+	private Bitmap defaultBg = null;
 	private Map<String, PonyAnimation> ponyAnimations;
 
 	// Settings
 	private Bitmap selectedBg = null;
 	private boolean useDefaultBg = true;
-	private long targetFramerate = 30L;
+	private long targetFramerate = 60L;
 	private boolean enableParallax = true;
 	private PonyAnimation selectedPony;
 
@@ -49,34 +50,16 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 	public void onCreate()
 	{
 		super.onCreate();
-
-		AssetManager assetManager = getAssets();
-		try
-		{
-			final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
-			
-			InputStream istr = assetManager.open("defaultbg.jpg");
-			final int sampleSize = BitmapLoader.getSampleSizeFromInputStream(istr,
-					wmMan.getDesiredMinimumWidth(), wmMan.getDesiredMinimumHeight());
-			istr.close();
-			istr = assetManager.open("defaultbg.jpg");
-			defaultBg = BitmapLoader.decodeSampledBitmapFromInputStream(istr, sampleSize);
-			istr.close();
-		}
-		catch (IOException e)
-		{
-			throw new IllegalStateException("Could not find background image");
-		}
-
-		ponyAnimations = new HashMap<String, PonyAnimation>();
-		ponyAnimations.put("pinkie", new PinkieAnimation(assetManager));
-		ponyAnimations.put("rarity", new RarityAnimation(assetManager));
 	}
 
 	@Override
 	public void onDestroy()
 	{
-		defaultBg.recycle();
+		if (defaultBg != null)
+		{
+			defaultBg.recycle();
+			defaultBg = null;
+		}
 		if (selectedBg != null)
 		{
 			selectedBg.recycle();
@@ -169,9 +152,32 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 					selectedBg.recycle();
 					selectedBg = null;
 				}
+				try
+				{
+					final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
+					final AssetManager assetManager = getAssets();
+					
+					InputStream istr = assetManager.open("defaultbg.jpg");
+					final int sampleSize = BitmapLoader.getSampleSizeFromInputStream(istr,
+							wmMan.getDesiredMinimumWidth(), wmMan.getDesiredMinimumHeight());
+					istr.close();
+					istr = assetManager.open("defaultbg.jpg");
+					defaultBg = BitmapLoader.decodeSampledBitmapFromInputStream(istr, sampleSize);
+					istr.close();
+				}
+				catch (IOException e)
+				{
+					throw new IllegalStateException("Could not find background image");
+				}
 			}
 			else
 			{
+				if (defaultBg != null)
+				{
+					defaultBg.recycle();
+					defaultBg = null;
+				}
+				
 				final String imageUriStr = prefs.getString("livewallpaper_image", null);
 				if (imageUriStr != null)
 				{
@@ -204,7 +210,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 			}
 
 			// Framerate
-			final String frameratePref = prefs.getString("livewallpaper_framerate", "30");
+			final String frameratePref = prefs.getString("livewallpaper_framerate", "60");
 			try
 			{
 				targetFramerate = Long.parseLong(frameratePref);
@@ -226,7 +232,24 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 			{
 				selectedPony.onDestroy();
 			}
-			selectedPony = ponyAnimations.get(prefs.getString("livewallpaper_pony", "pinkie"));
+			// Refresh pony animations; preference change could have updated them
+			ponyAnimations = new HashMap<String, PonyAnimation>();
+			ponyAnimations.put("pinkie", new PinkieAnimation(getAssets()));
+			try
+			{
+				for (final PonyAnimationContainer container : PonyDownloader.getPonyAnimations(
+						getFilesDir(), getCacheDir()))
+				{
+					ponyAnimations.put(container.getId(), container.getPonyAnimation());
+				}
+			}
+			catch (Exception e)
+			{
+				throw new RuntimeException(e);
+			}
+			// Set new pony animation
+			final String selectedPonyId = prefs.getString("livewallpaper_pony", "pinkie");
+			selectedPony = ponyAnimations.containsKey(selectedPonyId) ? ponyAnimations.get(selectedPonyId) : ponyAnimations.get("pinkie");
 			selectedPony.onCreate();
 
 			drawFrame();

@@ -6,6 +6,7 @@
 
 	<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="7" />
 	<uses-feature android:name="android.software.live_wallpaper" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
 	<application android:icon="@drawable/ic_launcher"
 		android:label="Pinkie Pie Live">
@@ -28,13 +29,13 @@
 		</service>
 
 		<activity android:label="Settings"
-			android:name=".PinkiePieLiveWallpaperSettings"
+			android:name=".preference.PinkiePieLiveWallpaperSettings"
 			android:theme="@android:style/Theme.Light.WallpaperSettings"
 			android:exported="true"
 			android:icon="@drawable/ic_launcher">
 		</activity>
 		<activity android:label="Advanced Settings"
-    		android:name=".PinkiePieLiveWallpaperSettingsAdvanced"
+    		android:name=".preference.PinkiePieLiveWallpaperSettingsAdvanced"
             android:theme="@android:style/Theme.Light">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -43,7 +44,7 @@
         </activity>
 		
 		<activity android:label="Credits"
-			android:name=".PinkiePieLiveCredits"
+			android:name=".preference.PinkiePieLiveCredits"
 			android:theme="@android:style/Theme.Light"
 			android:exported="false"
 			android:icon="@drawable/ic_launcher">

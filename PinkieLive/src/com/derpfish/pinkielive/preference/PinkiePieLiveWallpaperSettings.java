@@ -1,5 +1,6 @@
-package com.derpfish.pinkielive;
+package com.derpfish.pinkielive.preference;
 
+import com.derpfish.pinkielive.PinkiePieLiveWallpaper;
 import com.derpfish.pinkielive.R;
 
 import android.content.Intent;
@@ -24,15 +25,16 @@ public class PinkiePieLiveWallpaperSettings extends PreferenceActivity implement
 
 		getPreferenceManager().setSharedPreferencesName(PinkiePieLiveWallpaper.SHARED_PREFS_NAME);
 		addPreferencesFromResource(R.xml.livewallpaper_settings);
+		
 		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-
+		
 		setDefaultBgEnabled();
 
-		Preference gallery_pref = findPreference("livewallpaper_image");
+		findPreference("livewallpaper_image").setOnPreferenceClickListener(this);
+		
 		gallery = new Intent();
 		gallery.setType("image/*");
 		gallery.setAction(Intent.ACTION_GET_CONTENT);
-		gallery_pref.setOnPreferenceClickListener(this);
 	}
 
 	private void setDefaultBgEnabled()

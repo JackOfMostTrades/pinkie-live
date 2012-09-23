@@ -1,5 +1,6 @@
-package com.derpfish.pinkielive;
+package com.derpfish.pinkielive.preference;
 
+import com.derpfish.pinkielive.PinkiePieLiveWallpaper;
 import com.derpfish.pinkielive.R;
 
 import android.os.Bundle;
