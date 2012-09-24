@@ -276,7 +276,9 @@ public class PonyDownloader
 		tmpFile.delete();
 	}
 	
-	public static List<PonyAnimationContainer> getPonyAnimations(final File dataDir, final File cacheDir) throws FileNotFoundException, IOException, ClassNotFoundException, IllegalAccessException, InstantiationException
+	public static List<PonyAnimationContainer> getPonyAnimations(final File dataDir, final File cacheDir,
+			final boolean loadAnimations)
+			throws FileNotFoundException, IOException, ClassNotFoundException, IllegalAccessException, InstantiationException
 	{
 		final List<PonyAnimationContainer> containers = new ArrayList<PonyAnimationContainer>();
 		final File ponyDir = new File(dataDir.getAbsolutePath() + File.separator + "ponies");
@@ -306,18 +308,22 @@ public class PonyDownloader
 			    final PonyAnimationContainer container = new PonyAnimationContainer();
 			    container.setId(properties.getProperty("id"));
 			    container.setName(properties.getProperty("name"));
+			    container.setVersion(Long.parseLong(properties.getProperty("version")));
 			    
-			    final File animCacheDir = new File(cacheDir.getAbsolutePath() + File.separator + container.getId());
-			    if (!animCacheDir.exists())
+			    if (loadAnimations)
 			    {
-			    	animCacheDir.mkdir();
+				    final File animCacheDir = new File(cacheDir.getAbsolutePath() + File.separator + container.getId());
+				    if (!animCacheDir.exists())
+				    {
+				    	animCacheDir.mkdir();
+				    }
+				    
+				    final DexClassLoader classLoader = new DexClassLoader(lib.getAbsolutePath(),
+				    		animCacheDir.getAbsolutePath(), null, PonyDownloader.class.getClassLoader());
+				    Class<?> animClass = classLoader.loadClass(properties.getProperty("className"));
+				    container.setPonyAnimation(animClass.asSubclass(PonyAnimation.class).newInstance());
+				    container.getPonyAnimation().setResourceDir(subDir);
 			    }
-			    
-			    final DexClassLoader classLoader = new DexClassLoader(lib.getAbsolutePath(),
-			    		animCacheDir.getAbsolutePath(), null, PonyDownloader.class.getClassLoader());
-			    Class<?> animClass = classLoader.loadClass(properties.getProperty("className"));
-			    container.setPonyAnimation(animClass.asSubclass(PonyAnimation.class).newInstance());
-			    container.getPonyAnimation().setResourceDir(subDir);
 			    
 			    containers.add(container);
 			}

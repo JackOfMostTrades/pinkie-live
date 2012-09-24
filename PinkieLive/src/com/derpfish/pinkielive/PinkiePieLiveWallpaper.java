@@ -37,7 +37,6 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 	public static final double TIME_FOR_JUMP = 1500.0;
 
 	private Bitmap defaultBg = null;
-	private Map<String, PonyAnimation> ponyAnimations;
 
 	// Settings
 	private Bitmap selectedBg = null;
@@ -233,12 +232,12 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 				selectedPony.onDestroy();
 			}
 			// Refresh pony animations; preference change could have updated them
-			ponyAnimations = new HashMap<String, PonyAnimation>();
+			final Map<String, PonyAnimation> ponyAnimations = new HashMap<String, PonyAnimation>();
 			ponyAnimations.put("pinkie", new PinkieAnimation(getAssets()));
 			try
 			{
 				for (final PonyAnimationContainer container : PonyDownloader.getPonyAnimations(
-						getFilesDir(), getCacheDir()))
+						getFilesDir(), getCacheDir(), true))
 				{
 					ponyAnimations.put(container.getId(), container.getPonyAnimation());
 				}

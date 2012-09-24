@@ -42,13 +42,6 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
-		
-		<activity android:label="Credits"
-			android:name=".preference.PinkiePieLiveCredits"
-			android:theme="@android:style/Theme.Light"
-			android:exported="false"
-			android:icon="@drawable/ic_launcher">
-		</activity>
-		
+        
 	</application>
 </manifest>

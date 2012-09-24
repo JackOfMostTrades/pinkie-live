@@ -6,6 +6,7 @@ public class PonyAnimationContainer
 {
 	private String id;
 	private String name;
+	private Long version;
 	private PonyAnimation ponyAnimation;
 	
 	public String getId()
@@ -23,6 +24,16 @@ public class PonyAnimationContainer
 		return name;
 	}
 	
+	public Long getVersion()
+	{
+		return version;
+	}
+
+	public void setVersion(Long version)
+	{
+		this.version = version;
+	}
+
 	public void setName(String name)
 	{
 		this.name = name;

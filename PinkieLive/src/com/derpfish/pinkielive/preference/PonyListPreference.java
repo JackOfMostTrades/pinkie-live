@@ -29,7 +29,8 @@ public class PonyListPreference extends ListPreference
 		final List<PonyAnimationContainer> animations;
 		try
 		{
-			animations = PonyDownloader.getPonyAnimations(getContext().getFilesDir(), getContext().getCacheDir());
+			animations = PonyDownloader.getPonyAnimations(
+					getContext().getFilesDir(), getContext().getCacheDir(), false);
 		}
 		catch (Exception e)
 		{
