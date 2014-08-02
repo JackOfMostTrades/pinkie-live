@@ -1,5 +1,7 @@
 package com.derpfish.pinkielive;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -12,7 +14,6 @@ import com.derpfish.pinkielive.download.PonyDownloader;
 
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -22,7 +23,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.service.wallpaper.WallpaperService;
@@ -96,7 +96,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 															drawFrame();
 														}
 													};
-		
+
 		private boolean				mVisible;
 		private final SharedPreferences mPreferences;
 		private final BroadcastReceiver broadcastReceiver;
@@ -155,7 +155,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 				{
 					final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
 					final AssetManager assetManager = getAssets();
-					
+
 					InputStream istr = assetManager.open("defaultbg.jpg");
 					final int sampleSize = BitmapLoader.getSampleSizeFromInputStream(istr,
 							wmMan.getDesiredMinimumWidth(), wmMan.getDesiredMinimumHeight());
@@ -176,7 +176,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 					defaultBg.recycle();
 					defaultBg = null;
 				}
-				
+
 				final String imageUriStr = prefs.getString("livewallpaper_image", null);
 				if (imageUriStr != null)
 				{
@@ -185,22 +185,20 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 						selectedBg.recycle();
 					}
 
-					final Uri bgImage = Uri.parse(imageUriStr);
 					try
 					{
-						final ContentResolver contentResolver = getContentResolver();
+						File bg = new File(getApplicationContext().getFilesDir(), imageUriStr);
 						final WallpaperManager wmMan = WallpaperManager.getInstance(getApplicationContext());
-						
-						InputStream istr = contentResolver.openInputStream(bgImage);
+						FileInputStream istr = new FileInputStream(bg);
 						final int sampleSize = BitmapLoader.getSampleSizeFromInputStream(istr,
 								wmMan.getDesiredMinimumWidth(), wmMan.getDesiredMinimumHeight());
 						istr.close();
-						
-						istr = contentResolver.openInputStream(bgImage);
+
+						istr = new FileInputStream(bg);
 						selectedBg = BitmapLoader.decodeSampledBitmapFromInputStream(istr, sampleSize);
 						istr.close();
 					}
-					catch (IOException e)
+					catch (Exception e)
 					{
 						selectedBg = null;
 						Log.w("PinkieLive", e);
@@ -376,7 +374,7 @@ public class PinkiePieLiveWallpaper extends WallpaperService
 							final float bgScale = Math.min(((float)actualBg.getWidth()) / ((float)minWidth), ((float)actualBg.getHeight()) / ((float)minHeight));
 							final int centeringOffsetX = (int)((float)actualBg.getWidth() - bgScale*minWidth)/2;
 							final int centeringOffsetY = (int)((float)actualBg.getHeight() - bgScale*minHeight)/2;
-							
+
 							c.drawBitmap(actualBg,
 									new Rect(centeringOffsetX - (int)(offsetX*bgScale),
 											centeringOffsetY - (int)(offsetY*bgScale),

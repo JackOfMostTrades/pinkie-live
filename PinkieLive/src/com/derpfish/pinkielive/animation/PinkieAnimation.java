@@ -146,9 +146,8 @@ public class PinkieAnimation implements PonyAnimation
 			lastAnim = (lastAnim + 1) % NUM_ANIMATIONS;
 			if (bmAnimation != null)
 			{
-				for (int i = 0; i < bmAnimation.length; i++)
-				{
-					bmAnimation[i].recycle();
+				for (Bitmap aBmAnimation : bmAnimation) {
+					aBmAnimation.recycle();
 				}
 				bmAnimation = null;
 			}
@@ -157,7 +156,7 @@ public class PinkieAnimation implements PonyAnimation
 				final InputStream istr = assetManager.open("jump" + (lastAnim + 1) + ".zip");
 				final ZipInputStream zis = new ZipInputStream(istr);
 				final Map<String, Bitmap> bitmaps = new HashMap<String, Bitmap>();
-				ZipEntry zipEntry = null;
+				ZipEntry zipEntry;
 				while ((zipEntry = zis.getNextEntry()) != null)
 				{
 					bitmaps.put(zipEntry.getName(), BitmapFactory.decodeStream(zis));
@@ -198,9 +197,8 @@ public class PinkieAnimation implements PonyAnimation
 	{
 		if (bmAnimation != null)
 		{
-			for (int i = 0; i < bmAnimation.length; i++)
-			{
-				bmAnimation[i].recycle();
+			for (Bitmap aBmAnimation : bmAnimation) {
+				aBmAnimation.recycle();
 			}
 		}
 	}
