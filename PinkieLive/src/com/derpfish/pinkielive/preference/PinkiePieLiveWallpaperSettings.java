@@ -86,26 +86,44 @@ public class PinkiePieLiveWallpaperSettings extends PreferenceActivity implement
 			{
 				Uri selectedImageUri = data.getData();
 				try {
-					// Delete old image
-					String oldLocation = getPreferenceManager().getSharedPreferences().getString("livewallpaper_image", null);
-					if (oldLocation != null) {
-						File oldFile = new File(getApplicationContext().getFilesDir(), oldLocation);
-						if (oldFile.exists()) oldFile.delete();
-					}
+                    // Delete old image
+                    String oldLocation = getPreferenceManager().getSharedPreferences().getString("livewallpaper_image", null);
+                    if (oldLocation != null) {
+                        File oldFile = new File(getApplicationContext().getFilesDir(), oldLocation);
+                        if (oldFile.exists()) oldFile.delete();
+                    }
 
-					// Copy the new one
-					FileOutputStream fos = openFileOutput(selectedImageUri.getLastPathSegment(), Context.MODE_PRIVATE);
-					InputStream fis = getContentResolver().openInputStream(selectedImageUri);
-					byte[] buf = new byte[1024];
-					int len;
-					while ((len = fis.read(buf)) != -1) {
-						fos.write(buf, 0, len);
-					}
-					fis.close();
-					fos.close();
+					// Copy file to a private copy
+                    String newFileName = "custom_bg_" + selectedImageUri.getLastPathSegment();
+                    InputStream fis = null;
+                    FileOutputStream fos = null;
+                    try {
+                        fos = openFileOutput(newFileName, Context.MODE_PRIVATE);
+                        fis = getContentResolver().openInputStream(selectedImageUri);
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = fis.read(buf)) != -1) {
+                            fos.write(buf, 0, len);
+                        }
+                    } finally {
+                        try {
+                            if (fis != null) {
+					            fis.close();
+                            }
+                        } catch (IOException e) {
+                            // Do nothing
+                        }
+                        try {
+                            if (fos != null) {
+					            fos.close();
+                            }
+                        } catch (IOException e) {
+                            // Do nothing
+                        }
+                    }
 
 					SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
-					editor.putString("livewallpaper_image", selectedImageUri.getLastPathSegment());
+					editor.putString("livewallpaper_image", newFileName);
 					editor.putBoolean("livewallpaper_defaultbg", false);
 					editor.commit();
 					((CheckBoxPreference) findPreference("livewallpaper_defaultbg")).setChecked(false);
