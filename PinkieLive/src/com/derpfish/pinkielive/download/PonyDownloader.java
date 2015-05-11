@@ -42,8 +42,8 @@ import dalvik.system.DexClassLoader;
 
 public class PonyDownloader
 {
-	private static final String animationsUrl = "http://animations.pinkie-live.googlecode.com/git/animations.xml";
-	private static final String animationsSigUrl = "http://animations.pinkie-live.googlecode.com/git/animations.sig";
+	private static final String animationsUrl = "https://github.com/JackOfMostTrades/pinkie-live.animations/raw/master/animations.xml";
+	private static final String animationsSigUrl = "https://github.com/JackOfMostTrades/pinkie-live.animations/raw/master/animations.sig";
 	
 	private static final String PUBLIC_KEY_ENCODED =
 "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1aP3qdJO5F64+UQVF1zl" +

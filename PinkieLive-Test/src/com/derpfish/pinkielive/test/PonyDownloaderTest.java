@@ -45,18 +45,23 @@ public class PonyDownloaderTest extends TestCase
 	public void testFetchAnimations() throws Exception
 	{
 		final List<PonyAnimationListing> listings = PonyDownloader.fetchListings();
-		assertEquals(2, listings.size());
+		assertEquals(3, listings.size());
 		assertEquals("lyra", listings.get(0).getId());
-		assertEquals("https://animations.pinkie-live.googlecode.com/git/lyra.zip", listings.get(0).getUrl());
+		assertEquals("https://github.com/JackOfMostTrades/pinkie-live.animations/raw/master/lyra.zip", listings.get(0).getUrl());
 		assertEquals("Lyra", listings.get(0).getName());
 		assertEquals(Long.valueOf(1L), listings.get(0).getVersion());
 		assertEquals("JaKenoGefQJn8DHAodwWve07grFNtxD6xocwLHV2M5yLcMXbbcGHOQseM0FMjf6iqCfSBeqn0wa+d4rh6PluUKqTwuHS129BBn9FRnDTmLY1WnjL/fV5n9BQCMCb3pA9ZZMotpp26VhBU3GfvEulIgp+l2ZSkUE1LCQWiOmGl2kYfZvRfezhlJhddteXLsJL1vS9cH16CJj1HmBaV+00FNUwxkbhCFk/ZpIKuAjUxY4azRUt6H11XAfXdkluEFDryRApD2tRImmIHGoNaOnvHc7Z0TBN52sTuUlOxXAG7WENVJEBicC4wI8DQm81sYrEqO8Zr9u4BX1DBGYmxxfpqQ==", listings.get(0).getChecksum());
 		
 		assertEquals("rarity", listings.get(1).getId());
-		assertEquals("https://animations.pinkie-live.googlecode.com/git/rarity.zip", listings.get(1).getUrl());
+		assertEquals("https://github.com/JackOfMostTrades/pinkie-live.animations/raw/master/rarity.zip", listings.get(1).getUrl());
 		assertEquals("Rarity", listings.get(1).getName());
 		assertEquals(Long.valueOf(1L), listings.get(1).getVersion());
 		assertEquals("Nb0AbQPFVBQ6t32Q1W8umi1WzgVq0pHzCt4gjXuDTewYz7UgrpPf/4ErnojV96SSreoCEifqp0/IGYAvQ6Y6Zd8YMfJhb5Xgw+jGjcvIpRKqvTiqbH7qU6z0oci/bbHf32dmn5WiBACSb9xEwg43snrraIuVpKGpsXGofvbE/i/OQ7rP6YlM7xilAyIAmvKJQuB4RDERn156ojS2U86XTCisONqt1GECh9XywLR2nlyeWTKiPnEclS4re/uBLcIqe2t/lej4P5CoWSOFkMlKq+6H6wilsKuQExVqBGZTJxehTVEJri/p/M+QCSC5+RQDccWoTN4rtVhBEX+bdwIZOA==", listings.get(1).getChecksum());
-		
+
+        assertEquals("twilight", listings.get(2).getId());
+        assertEquals("https://github.com/JackOfMostTrades/pinkie-live.animations/raw/master/twilight.zip", listings.get(2).getUrl());
+        assertEquals("Twilight Sparkle", listings.get(2).getName());
+        assertEquals(Long.valueOf(1L), listings.get(2).getVersion());
+        assertEquals("rAe/Sz9ZF4+sRPMxXNYB+oCd9bgQGG0/XU8FkqNDGIJ98i8Fnz2BqsxM80gOnMX0AHlZxRBWb2ANtpSLiSEKW07qXcQD7fBXDJjrq+pygZ28LjmDis5F5v3V0nc/Y9sB5YU1Y7o1L8HSwiMJgAKXaacevjefAuoNQHqRYek8KR2ZnOaSFpec8GfCBVGgpxFYJKX8lrxwoZ15se3+pxj3bD4opQM6v8/07W9VAbsXqyEmYVtX4AdkGqSt7R5HaRGCsxetJyndpXX1TraYHIKWECY43Y1OlkleRoJTw4YnNDJW9Y9CAEVqJeTr1A80mByhjCDx/zzhx9vnc6H0VsXnkw==", listings.get(2).getChecksum());
 	}
 }
